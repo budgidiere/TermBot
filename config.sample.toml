@@ -4,9 +4,15 @@
 prefixes = ["t!", "t;", "T!", "t;", "<@bot ID> "]
 # bot token
 token = 'definitelyARealDiscordToken'
+# bot owners, only accounts that can add/remove terms
+bot_owners = [694563574386786314]
 # bot description, not sure where this is actually used?
 description = "TermBot is a searchable glossary of plurality terms."
+# link to invite the bot to your server
+invite_link = "link"
+# invite to a support server
+support_server = ""
 
 [db]
 # url to postgres database
-database_url = "postgres://"
+database_url = "postgresql://termbot:termbot@localhost/termbot"
