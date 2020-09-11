@@ -5,6 +5,8 @@ from pathlib import Path
 import discord
 from discord.ext import commands
 import tomlkit
+from cmds import static_commands, server_commands, admin_commands, term_commands
+from database import database as botdb
 
 config_file = Path("config.toml")
 
@@ -28,8 +30,12 @@ logger.addHandler(handler)
 description = bot_config["bot"]["description"]
 
 bot = commands.AutoShardedBot(
-    command_prefix=bot_config["bot"]["prefixes"], description=description
+    command_prefix=bot_config["bot"]["prefixes"],
+    description=description,
+    case_insensitive=True,
 )
+
+conn = botdb.DatabaseConn(bot_config["db"]["database_url"])
 
 
 @bot.event
@@ -41,5 +47,10 @@ async def on_ready():
 
     await bot.change_presence(activity=discord.Game(name=activity))
 
+
+bot.add_cog(static_commands.StaticCommands(bot, bot_config))
+bot.add_cog(server_commands.ServerCommands(bot, conn))
+bot.add_cog(admin_commands.AdminCommands(bot, conn))
+bot.add_cog(term_commands.TermCommands(bot, conn))
 
 bot.run(bot_config["bot"]["token"])
