@@ -1,0 +1,12 @@
+[bot]
+# array of prefixes, first prefix will be used in status
+# recommended to add a prefix "<@bot ID> ", to allow @mentioning the bot
+prefixes = ["t!", "t;", "T!", "t;", "<@bot ID> "]
+# bot token
+token = 'definitelyARealDiscordToken'
+# bot description, not sure where this is actually used?
+description = "TermBot is a searchable glossary of plurality terms."
+
+[db]
+# url to postgres database
+database_url = "postgres://"
