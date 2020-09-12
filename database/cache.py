@@ -23,7 +23,7 @@ import os
 from aiofile import *
 
 
-async def retrive_data(file):
+async def retrieve_data(file):
     try:
         if asyncio.run(init_cache_file(file)) == False:
             return False
@@ -59,8 +59,8 @@ async def purge_data(file):
         return False
 
 
-async def retrive_data_rolling(key, stale):
-    data = retrive_data(key)
+async def retrieve_data_rolling(key, stale):
+    data = retrieve_data(key)
     if data != False:
         await store_data(key, data, stale)
     return data

@@ -63,7 +63,7 @@ class DatabaseConn:
                 await cur.execute("DELETE FROM terms WHERE id = %s", (int(term_id),))
 
     async def get_term(self, term):
-        data = asyncio.run(retrive_data_rolling((term, 86400)))
+        data = asyncio.run(retrieve_data_rolling((term, 86400)))
         if data == False:
             async with self.pool.acquire() as conn:
                 async with conn.cursor() as cur:
@@ -86,7 +86,7 @@ class DatabaseConn:
                 )
 
     async def get_explanation(self, topic):
-        data = asyncio.run(retrive_data_rolling(topic, 86400))
+        data = asyncio.run(retrieve_data_rolling(topic, 86400))
         if data == False:
             async with self.pool.acquire() as conn:
                 async with conn.cursor() as cur:
@@ -97,7 +97,7 @@ class DatabaseConn:
         return data
 
     async def get_topics(self):
-        data = asyncio.run(retrive_data_rolling("topics", 86400))
+        data = asyncio.run(retrieve_data_rolling("topics", 86400))
         if data == False:
             async with self.pool.acquire() as conn:
                 async with conn.cursor() as cur:
@@ -122,7 +122,7 @@ class DatabaseConn:
                 )
 
     async def get_blacklist(self, guild_id):
-        data = asyncio.run(retrive_data_rolling("blacklisted_channels", 86400))
+        data = asyncio.run(retrieve_data_rolling("blacklisted_channels", 86400))
         if data == False:
             async with self.pool.acquire() as conn:
                 async with conn.cursor() as cur:
