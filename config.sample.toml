@@ -1,16 +1,16 @@
 [bot]
 # array of prefixes, first prefix will be used in status
 # recommended to add a prefix "<@bot ID> ", to allow @mentioning the bot
-prefixes = ["t!", "t;", "T!", "t;", "<@bot ID> "]
+prefixes = ["t!", "t;", "T!", "T;", "<@bot ID> "]
 # bot token
 token = 'definitelyARealDiscordToken'
-# bot owners, only accounts that can add/remove terms
+# bot owners, only accounts that can add/remove bot admins, and remove terms
 bot_owners = [694563574386786314]
 # bot description, not sure where this is actually used?
 description = "TermBot is a searchable glossary of plurality terms."
-# link to invite the bot to your server
+# link to invite the bot to your server (or empty to disable)
 invite_link = "link"
-# invite to a support server
+# invite to a support server (or empty to disable)
 support_server = ""
 
 [db]

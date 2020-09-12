@@ -99,9 +99,12 @@ class DatabaseConn:
         return channel_list
 
     async def channel_not_blacklisted(self, ctx):
-        if ctx.message.guild.id:
-            blacklist = await self.get_blacklist(ctx.message.guild.id)
-            return ctx.message.channel.id not in blacklist
+        if ctx.message.guild:
+            if ctx.message.guild.id:
+                blacklist = await self.get_blacklist(ctx.message.guild.id)
+                return ctx.message.channel.id not in blacklist
+        else:
+            return True
 
     async def add_bot_admin(self, user_id, user):
         self.cur.execute(

@@ -59,7 +59,7 @@ class StaticCommands(commands.Cog):
         )
         embed.add_field(
             name="Management commands",
-            value=f"These commands require the `Manage Server` permission to use.\n`perms`: Explain the permissions {self.bot.user.name} needs to function.\n`disable`: Disable all commands *except* `explain` in a given channel(s).\n`enable`: Enable all commands except `explain` in a given channel(s).\nTo disable ***all*** commands in a channel, deny the bot the `Send Messages` permission in that channel.",
+            value=f"These commands require the `Manage Server` permission to use.\n`perms`: Explain the permissions {self.bot.user.name} needs to function.\n`disable`: Disable all commands *except* `explain` in a given channel(s).\n`enable`: Enable all commands except `explain` in a given channel(s).\n`blacklist`: Show the current command blacklist.\n\nTo disable ***all*** commands in a channel, deny the bot the `Send Messages` permission in that channel.",
             inline=False,
         )
         embed.add_field(
@@ -88,11 +88,18 @@ class StaticCommands(commands.Cog):
 
     @commands.command()
     async def invite(self, ctx):
-        if await self.blacklist(ctx):
-            await ctx.trigger_typing()
+        if not self.bot_config["bot"]["invite_link"] == "":
+            if await self.blacklist(ctx):
+                await ctx.trigger_typing()
+                await ctx.send(
+                    "Use this link to invite me to your server!\n<{}>".format(
+                        self.bot_config["bot"]["invite_link"]
+                    )
+                )
+        else:
             await ctx.send(
-                "Use this link to invite me to your server!\n<{}>".format(
-                    self.bot_config["bot"]["invite_link"]
+                "This instance of {} cannot be invited to other servers.".format(
+                    self.bot.user.name
                 )
             )
 

@@ -33,8 +33,6 @@ if not config_file.is_file():
 
 bot_config = tomlkit.parse(config_file.read_text())
 
-activity = bot_config["bot"]["prefixes"][0] + "help"
-
 logger = logging.getLogger("discord")
 logger.setLevel(logging.INFO)
 handler = logging.FileHandler(filename="discord.log", encoding="utf-8", mode="w")
@@ -60,6 +58,28 @@ async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
     print("------")
+
+    activity = "{}help | in {} servers".format(
+        bot_config["bot"]["prefixes"][0], len(bot.guilds)
+    )
+
+    await bot.change_presence(activity=discord.Game(name=activity))
+
+
+@bot.event
+async def on_guild_join(guild):
+    activity = "{}help | in {} servers".format(
+        bot_config["bot"]["prefixes"][0], len(bot.guilds)
+    )
+
+    await bot.change_presence(activity=discord.Game(name=activity))
+
+
+@bot.event
+async def on_guild_remove(guild):
+    activity = "{}help | in {} servers".format(
+        bot_config["bot"]["prefixes"][0], len(bot.guilds)
+    )
 
     await bot.change_presence(activity=discord.Game(name=activity))
 
