@@ -24,10 +24,23 @@ class DatabaseConn:
         self.conn = psycopg2.connect(database_url)
         self.cur = self.conn.cursor()
 
-    async def add_term(self, term, description, source, synonyms):
+    async def add_term(self, term, description, source, synonyms, category):
+        if synonyms:
+            self.cur.execute(
+                "INSERT INTO terms (term, description, source, synonyms, categories) VALUES (%s, %s, %s, %s, %s)",
+                (term, description, source, synonyms, [category]),
+            )
+        else:
+            self.cur.execute(
+                "INSERT INTO terms (term, description, source, categories) VALUES (%s, %s, %s, %s)",
+                (term, description, source, [category]),
+            )
+        self.conn.commit()
+
+    async def set_categories(self, term, categories):
         self.cur.execute(
-            "INSERT INTO terms (term, description, source, synonyms) VALUES (%s, %s, %s, %s)",
-            (term, description, source, synonyms),
+            "UPDATE terms SET categories = %s WHERE term = %s OR %s = ANY (synonyms)",
+            (categories, term, term),
         )
         self.conn.commit()
 
@@ -35,7 +48,13 @@ class DatabaseConn:
         self.cur.execute("DELETE FROM terms WHERE id = %s", (int(term_id),))
 
     async def get_term(self, term):
-        self.cur.execute("SELECT * FROM terms WHERE term = %s", (term,))
+        if isinstance(term, int):
+            self.cur.execute("SELECT * FROM terms WHERE id = %s", (int(term),))
+        elif isinstance(term, str):
+            self.cur.execute(
+                "SELECT * FROM terms WHERE term = %s OR %s = ANY (synonyms)",
+                (term, term),
+            )
         return self.cur.fetchone()
 
     async def add_explanation(self, topic, explanation):
@@ -84,3 +103,8 @@ class DatabaseConn:
             blacklist = await self.get_blacklist(ctx.message.guild.id)
             return ctx.message.channel.id not in blacklist
 
+    async def add_bot_admin(self, user_id, user):
+        self.cur.execute(
+            "INSERT INTO admins (user_id, added_by_id) VALUES (%s, %s)", (user_id, user)
+        )
+        self.conn.commit()

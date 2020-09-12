@@ -70,9 +70,10 @@ class TermCommands(commands.Cog):
         )
         embed.set_footer(text="ID: {}".format(term[0]))
         if term[5]:
-            synonyms = ""
-            for synonym in term[5]:
-                synonyms += "• " + synonym + "\n"
+            synonyms = ", ".join(term[5])
             embed.add_field(name="Synonyms", value=synonyms, inline=False)
+        if term[6]:
+            categories = ", ".join(term[6])
+            embed.set_author(name=categories.title())
         embed.add_field(name="Source", value=term[3], inline=False)
         return embed

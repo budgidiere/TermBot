@@ -46,12 +46,22 @@ class AdminCommands(commands.Cog):
 
     @commands.command()
     @is_bot_owner()
-    async def addterm(self, ctx, term, desc, source, *synonyms):
+    async def addterm(self, ctx, term, category, desc, source, *synonyms):
         term = term.lower()
-        for synonym in synonyms:
-            synonym = synonym.lower()
-        await self.conn.add_term(term, desc, source, list(synonyms))
+        category = category.lower()
+        synonyms = [synonym.lower() for synonym in synonyms]
+        await self.conn.add_term(term, desc, source, list(synonyms), category)
         await ctx.send("✅ Term added.")
+
+    @commands.command()
+    @is_bot_owner()
+    async def setcategories(self, ctx, term, *categories):
+        term = term.lower()
+        categories = [category.lower() for category in categories]
+        await self.conn.set_categories(term, categories)
+        await ctx.send(
+            "✅ Added {} to the categories {}.".format(term, ", ".join(categories))
+        )
 
     @commands.command()
     @is_bot_owner()
@@ -64,3 +74,9 @@ class AdminCommands(commands.Cog):
     async def addtopic(self, ctx, topic, *, explanation):
         await self.conn.add_explanation(topic, explanation)
         await ctx.send("✅ Explanation added.")
+
+    @commands.command()
+    @is_bot_owner()
+    async def makeadmin(self, ctx, user_id: discord.User):
+        await self.conn.add_bot_admin(user_id.id, ctx.message.author.id)
+        await ctx.send("✅ Gave admin perms to **{}**.".format(str(user_id)))

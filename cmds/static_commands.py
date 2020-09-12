@@ -35,12 +35,7 @@ class StaticCommands(commands.Cog):
         )
 
         prefixes = self.bot.user.name + " uses the following prefixes:\n"
-
-        for index, prefix in enumerate(self.bot_config["bot"]["prefixes"]):
-            if index != len(self.bot_config["bot"]["prefixes"]) - 1:
-                prefixes += prefix + ", "
-            else:
-                prefixes += prefix
+        prefixes += ", ".join(self.bot_config["bot"]["prefixes"])
 
         embed.add_field(
             name="Prefix",
