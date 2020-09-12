@@ -95,6 +95,7 @@ class DatabaseConn:
                     )
                     return await cur.fetchone()
         return data
+
     async def get_topics(self):
         data = asyncio.run(retrive_data_rolling(("topics", 86400)))
         if data == False:
@@ -121,7 +122,7 @@ class DatabaseConn:
                 )
 
     async def get_blacklist(self, guild_id):
-        data = asyncio.run(retrive_data_rolling(("topics", 86400)))
+        data = asyncio.run(retrive_data_rolling(("blacklisted_channels", "86400")))
         if data == False:
             async with self.pool.acquire() as conn:
                 async with conn.cursor() as cur:
