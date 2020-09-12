@@ -1,7 +1,7 @@
 [bot]
 # array of prefixes, first prefix will be used in status
 # recommended to add a prefix "<@bot ID> ", to allow @mentioning the bot
-prefixes = ["t!", "t;", "T!", "T;", "<@bot ID> "]
+prefixes = ["t!", "t;", "<@bot ID> "]
 # bot token
 token = 'definitelyARealDiscordToken'
 # bot owners, only accounts that can add/remove bot admins, and remove terms
