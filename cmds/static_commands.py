@@ -21,9 +21,10 @@ from discord.ext import commands
 
 
 class StaticCommands(commands.Cog):
-    def __init__(self, bot, bot_config):
+    def __init__(self, bot, bot_config, conn):
         self.bot = bot
         self.bot_config = bot_config
+        self.blacklist = conn.channel_not_blacklisted
         self.bot.remove_command("help")
 
     async def createHelpCommand(self):
@@ -85,27 +86,31 @@ class StaticCommands(commands.Cog):
 
     @commands.command()
     async def help(self, ctx):
-        await ctx.trigger_typing()
-        embed = await self.createHelpCommand()
-        await ctx.send(embed=embed)
+        if await self.blacklist(ctx):
+            await ctx.trigger_typing()
+            embed = await self.createHelpCommand()
+            await ctx.send(embed=embed)
 
     @commands.command()
     async def invite(self, ctx):
-        await ctx.trigger_typing()
-        await ctx.send(
-            "Use this link to invite me to your server!\n<{}>".format(
-                self.bot_config["bot"]["invite_link"]
+        if await self.blacklist(ctx):
+            await ctx.trigger_typing()
+            await ctx.send(
+                "Use this link to invite me to your server!\n<{}>".format(
+                    self.bot_config["bot"]["invite_link"]
+                )
             )
-        )
 
     @commands.command(aliases=["hi"])
     async def hello(self, ctx):
-        await ctx.trigger_typing()
-        await ctx.send("Hello " + ctx.message.author.mention + "!")
+        if await self.blacklist(ctx):
+            await ctx.trigger_typing()
+            await ctx.send("Hello " + ctx.message.author.mention + "!")
 
     @commands.command()
     async def pronouns(self, ctx):
-        await ctx.trigger_typing()
-        await ctx.send(
-            f"Hi, I'm {self.bot.user.name}! I'm non-binary, and my preferred pronouns are they/them."
-        )
+        if await self.blacklist(ctx):
+            await ctx.trigger_typing()
+            await ctx.send(
+                f"Hi, I'm {self.bot.user.name}! I'm non-binary, and my preferred pronouns are they/them."
+            )

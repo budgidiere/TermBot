@@ -64,7 +64,7 @@ async def on_ready():
     await bot.change_presence(activity=discord.Game(name=activity))
 
 
-bot.add_cog(static_commands.StaticCommands(bot, bot_config))
+bot.add_cog(static_commands.StaticCommands(bot, bot_config, conn))
 bot.add_cog(server_commands.ServerCommands(bot, conn))
 bot.add_cog(admin_commands.AdminCommands(bot, conn))
 bot.add_cog(term_commands.TermCommands(bot, conn))

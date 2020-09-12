@@ -16,30 +16,16 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import datetime
 import discord
 from discord.ext import commands
-import datetime
 
 
 class TermCommands(commands.Cog):
     def __init__(self, bot, conn):
         self.bot = bot
         self.conn = conn
-
-    # ctx.message.guild.id
-
-    def channel_not_blacklisted(self):
-        async def predicate(ctx):
-            if ctx.message.guild.id:
-                blacklist = self.conn.get_blacklist(ctx.message.guild.id)
-                if ctx.message.channel.id in blacklist:
-                    return True
-                else:
-                    return False
-            else:
-                return False
-
-        return commands.check(predicate)
+        self.blacklist = conn.channel_not_blacklisted
 
     @commands.command(aliases=["e", "ex"])
     async def explain(self, ctx, *args):
@@ -55,7 +41,6 @@ class TermCommands(commands.Cog):
             await self.listtopics(ctx)
 
     @commands.command(aliases=["list"])
-    @commands.check(channel_not_blacklisted)
     async def listtopics(self, ctx):
         await ctx.trigger_typing()
         topics = await self.conn.get_topics()
@@ -65,16 +50,16 @@ class TermCommands(commands.Cog):
         await ctx.send(message)
 
     @commands.command(aliases=["d"])
-    @commands.check(channel_not_blacklisted)
     async def define(self, ctx, *, args):
-        await ctx.trigger_typing()
-        args = args.lower()
-        term = await self.conn.get_term(args)
-        if term:
-            embed = self.definition_embed_builder(term)
-            await ctx.send(embed=embed)
-        else:
-            await ctx.send("Term not found!")
+        if await self.blacklist(ctx):
+            await ctx.trigger_typing()
+            args = args.lower()
+            term = await self.conn.get_term(args)
+            if term:
+                embed = self.definition_embed_builder(term)
+                await ctx.send(embed=embed)
+            else:
+                await ctx.send("Term not found!")
 
     def definition_embed_builder(self, term):
         embed = discord.Embed(
