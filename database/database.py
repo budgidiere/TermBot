@@ -16,8 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import psycopg2
 import aiopg
+from database.cache import *
 
 
 async def init_dbconn(database_url):
@@ -34,6 +34,7 @@ class DatabaseConn:
         self.pool = await aiopg.create_pool(self.database_url)
 
     async def add_term(self, term, description, source, synonyms, category):
+        asyncio.run(purge_data(term))
         async with self.pool.acquire() as conn:
             async with conn.cursor() as cur:
                 if synonyms:
@@ -56,21 +57,25 @@ class DatabaseConn:
                 )
 
     async def del_term(self, term_id):
+        asyncio.run(purge_data(DatabaseConn.get_term(int(term_id))))
         async with self.pool.acquire() as conn:
             async with conn.cursor() as cur:
                 await cur.execute("DELETE FROM terms WHERE id = %s", (int(term_id),))
 
     async def get_term(self, term):
-        async with self.pool.acquire() as conn:
-            async with conn.cursor() as cur:
-                if isinstance(term, int):
-                    await cur.execute("SELECT * FROM terms WHERE id = %s", (int(term),))
-                elif isinstance(term, str):
-                    await cur.execute(
-                        "SELECT * FROM terms WHERE term = %s OR %s = ANY (synonyms)",
-                        (term, term),
-                    )
-                    return await cur.fetchone()
+        data = asyncio.run(retrive_data_rolling((term, 86400)))
+        if data == False:
+            async with self.pool.acquire() as conn:
+                async with conn.cursor() as cur:
+                    if isinstance(term, int):
+                        await cur.execute("SELECT * FROM terms WHERE id = %s", (int(term),))
+                    elif isinstance(term, str):
+                        await cur.execute(
+                            "SELECT * FROM terms WHERE term = %s OR %s = ANY (synonyms)",
+                            (term, term),
+                        )
+                        return await asyncio.run(pass_and_store(term, cur.fetchone(), 86400))
+        return data
 
     async def add_explanation(self, topic, explanation):
         async with self.pool.acquire() as conn:
@@ -81,18 +86,23 @@ class DatabaseConn:
                 )
 
     async def get_explanation(self, topic):
-        async with self.pool.acquire() as conn:
-            async with conn.cursor() as cur:
-                await cur.execute(
-                    "SELECT * FROM explanations WHERE topic = %s", (topic,)
-                )
-                return await cur.fetchone()
-
+        data = asyncio.run(retrive_data_rolling((topic, 86400)))
+        if data == False:
+            async with self.pool.acquire() as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute(
+                        "SELECT * FROM explanations WHERE topic = %s", (topic,)
+                    )
+                    return await cur.fetchone()
+        return data
     async def get_topics(self):
-        async with self.pool.acquire() as conn:
-            async with conn.cursor() as cur:
-                await cur.execute("SELECT * FROM explanations")
-                return await cur.fetchall()
+        data = asyncio.run(retrive_data_rolling(("topics", 86400)))
+        if data == False:
+            async with self.pool.acquire() as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute("SELECT * FROM explanations")
+                    return await cur.fetchall()
+        return data
 
     async def add_to_blacklist(self, channel, guild_id):
         async with self.pool.acquire() as conn:
@@ -111,18 +121,21 @@ class DatabaseConn:
                 )
 
     async def get_blacklist(self, guild_id):
-        async with self.pool.acquire() as conn:
-            async with conn.cursor() as cur:
-                await cur.execute(
-                    "SELECT channel_id FROM blacklisted_channels WHERE server_id = %s",
-                    (int(guild_id),),
-                )
-                channels = await cur.fetchall()
-                channel_list = []
-                for channel in channels:
-                    channel_list.append(channel[0])
+        data = asyncio.run(retrive_data_rolling(("topics", 86400)))
+        if data == False:
+            async with self.pool.acquire() as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute(
+                        "SELECT channel_id FROM blacklisted_channels WHERE server_id = %s",
+                        (int(guild_id),),
+                    )
+                    channels = await cur.fetchall()
+                    channel_list = []
+                    for channel in channels:
+                        channel_list.append(channel[0])
 
-                return channel_list
+                    return channel_list
+        return data
 
     async def channel_not_blacklisted(self, ctx):
         if ctx.message.guild:
