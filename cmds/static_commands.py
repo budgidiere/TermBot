@@ -29,13 +29,11 @@ class StaticCommands(commands.Cog):
     async def createHelpCommand(self):
         embed = discord.Embed(
             title="Help",
-            colour=discord.Colour(0x4A90E2),
+            colour=discord.Colour(0x9013FE),
             description=self.bot_config["bot"]["description"],
         )
 
         prefixes = self.bot.user.name + " uses the following prefixes:\n"
-
-        print(type(self.bot_config["bot"]["prefixes"]))
 
         for index, prefix in enumerate(self.bot_config["bot"]["prefixes"]):
             if index != len(self.bot_config["bot"]["prefixes"]) - 1:
@@ -68,6 +66,11 @@ class StaticCommands(commands.Cog):
             value=f"These commands require the `Manage Server` permission to use.\n`perms`: Explain the permissions {self.bot.user.name} needs to function.\n`disable`: Disable all commands *except* `explain` in a given channel(s).\n`enable`: Enable all commands except `explain` in a given channel(s).\nTo disable ***all*** commands in a channel, deny the bot the `Send Messages` permission in that channel.",
             inline=False,
         )
+        embed.add_field(
+            name="Source code",
+            value="The bot is open source, licensed under the GNU Affero General Public License 3.0 or later. The source code is available here: https://github.com/Starshine113/TermBot",
+            inline=False,
+        )
 
         if self.bot_config["bot"]["support_server"]:
             embed.add_field(
@@ -93,4 +96,16 @@ class StaticCommands(commands.Cog):
             "Use this link to invite me to your server!\n<{}>".format(
                 self.bot_config["bot"]["invite_link"]
             )
+        )
+
+    @commands.command(aliases=["hi"])
+    async def hello(self, ctx):
+        await ctx.trigger_typing()
+        await ctx.send("Hello " + ctx.message.author.mention + "!")
+
+    @commands.command()
+    async def pronouns(self, ctx):
+        await ctx.trigger_typing()
+        await ctx.send(
+            f"Hi, I'm {self.bot.user.name}! I'm non-binary, and my preferred pronouns are they/them."
         )

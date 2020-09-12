@@ -1,7 +1,7 @@
 create table if not exists terms
 (
     id          serial primary key,
-    term       text,
+    term        text,
     description text,
     source      text,
     created     timestamp not null default (current_timestamp at time zone 'utc')

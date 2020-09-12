@@ -32,7 +32,7 @@ class DatabaseConn:
         self.conn.commit()
 
     async def del_term(self, term_id):
-        self.cur.execute("DELETE FROM terms WHERE id = %s", (int(term_id)))
+        self.cur.execute("DELETE FROM terms WHERE id = %s", (int(term_id),))
 
     async def get_term(self, term):
         self.cur.execute("SELECT * FROM terms WHERE term = %s", (term,))
@@ -48,3 +48,33 @@ class DatabaseConn:
     async def get_explanation(self, topic):
         self.cur.execute("SELECT * FROM explanations WHERE topic = %s", (topic,))
         return self.cur.fetchone()
+
+    async def get_topics(self):
+        self.cur.execute("SELECT * FROM explanations")
+        return self.cur.fetchall()
+
+    async def add_to_blacklist(self, channel, guild_id):
+        self.cur.execute(
+            "INSERT INTO blacklisted_channels (channel_id, server_id) VALUES (%s, %s)",
+            (channel, guild_id),
+        )
+        self.conn.commit()
+
+    async def remove_from_blacklist(self, channel, guild_id):
+        self.cur.execute(
+            "DELETE FROM blacklisted_channels WHERE channel_id = %s AND server_id = %s",
+            (int(channel), int(guild_id)),
+        )
+        self.conn.commit()
+
+    async def get_blacklist(self, guild_id):
+        self.cur.execute(
+            "SELECT channel_id FROM blacklisted_channels WHERE server_id = %s",
+            (int(guild_id),),
+        )
+        channels = self.cur.fetchall()
+        channel_list = []
+        for channel in channels:
+            channel_list.append(channel[0])
+
+        return channel_list

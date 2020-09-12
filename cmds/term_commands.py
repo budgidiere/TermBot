@@ -26,15 +26,46 @@ class TermCommands(commands.Cog):
         self.bot = bot
         self.conn = conn
 
+    # ctx.message.guild.id
+
+    def channel_not_blacklisted(self):
+        async def predicate(ctx):
+            if ctx.message.guild.id:
+                blacklist = self.conn.get_blacklist(ctx.message.guild.id)
+                if ctx.message.channel.id in blacklist:
+                    return True
+                else:
+                    return False
+            else:
+                return False
+
+        return commands.check(predicate)
+
     @commands.command(aliases=["e", "ex"])
-    async def explain(self, ctx, *, args):
+    async def explain(self, ctx, *args):
         await ctx.trigger_typing()
-        args = args.lower()
-        explanation = await self.conn.get_explanation(args)
-        if explanation:
-            await ctx.send(explanation[1])
+        if args:
+            args = args[0].lower()
+            explanation = await self.conn.get_explanation(args)
+            if explanation:
+                await ctx.send(explanation[1])
+            else:
+                await self.listtopics(ctx)
+        else:
+            await self.listtopics(ctx)
+
+    @commands.command(aliases=["list"])
+    @commands.check(channel_not_blacklisted)
+    async def listtopics(self, ctx):
+        await ctx.trigger_typing()
+        topics = await self.conn.get_topics()
+        message = "Available topics:\n"
+        for topic in topics:
+            message += "• `" + topic[0] + "`\n"
+        await ctx.send(message)
 
     @commands.command(aliases=["d"])
+    @commands.check(channel_not_blacklisted)
     async def define(self, ctx, *, args):
         await ctx.trigger_typing()
         args = args.lower()
@@ -43,7 +74,7 @@ class TermCommands(commands.Cog):
             embed = self.definition_embed_builder(term)
             await ctx.send(embed=embed)
         else:
-            await ctx.send("Term not found! {}".format(type(args)))
+            await ctx.send("Term not found!")
 
     def definition_embed_builder(self, term):
         embed = discord.Embed(

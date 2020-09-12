@@ -48,6 +48,8 @@ class AdminCommands(commands.Cog):
     @is_bot_owner()
     async def addterm(self, ctx, term, desc, source, *synonyms):
         term = term.lower()
+        for synonym in synonyms:
+            synonym = synonym.lower()
         await self.conn.add_term(term, desc, source, list(synonyms))
         await ctx.send("✅ Term added.")
 
