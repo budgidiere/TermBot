@@ -49,8 +49,6 @@ bot = commands.AutoShardedBot(
     case_insensitive=True,
 )
 
-conn = botdb.DatabaseConn(bot_config["db"]["database_url"])
-
 
 @bot.event
 async def on_ready():
@@ -64,6 +62,13 @@ async def on_ready():
     )
 
     await bot.change_presence(activity=discord.Game(name=activity))
+
+    conn = await botdb.init_dbconn(bot_config["db"]["database_url"])
+
+    bot.add_cog(static_commands.StaticCommands(bot, bot_config, conn))
+    bot.add_cog(server_commands.ServerCommands(bot, conn))
+    bot.add_cog(admin_commands.AdminCommands(bot, conn))
+    bot.add_cog(term_commands.TermCommands(bot, conn))
 
 
 @bot.event
@@ -83,10 +88,5 @@ async def on_guild_remove(guild):
 
     await bot.change_presence(activity=discord.Game(name=activity))
 
-
-bot.add_cog(static_commands.StaticCommands(bot, bot_config, conn))
-bot.add_cog(server_commands.ServerCommands(bot, conn))
-bot.add_cog(admin_commands.AdminCommands(bot, conn))
-bot.add_cog(term_commands.TermCommands(bot, conn))
 
 bot.run(bot_config["bot"]["token"])

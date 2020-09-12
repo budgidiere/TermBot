@@ -3,3 +3,4 @@ tomlkit
 psycopg2
 aiofile
 dill
+aiopg

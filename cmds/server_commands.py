@@ -103,15 +103,21 @@ class ServerCommands(commands.Cog):
         for channel in blacklist:
             blacklist_message += "<#" + str(channel) + ">\n"
 
+        if blacklist_message == "":
+            blacklist_message = "No channels are blacklisted.\n(Use `{}disable` to disable commands in a given channel)".format(
+                ctx.prefix
+            )
+        else:
+            blacklist_message += (
+                "\nTo remove channels from the blacklist, use `{}enable`.".format(
+                    ctx.prefix
+                )
+            )
+
         embed = discord.Embed(
             title="Command blacklist",
             colour=discord.Colour(0x9013FE),
             description=blacklist_message,
-        )
-        embed.set_footer(
-            text="Use `{}enable` to remove channels from the blacklist.".format(
-                ctx.prefix
-            )
         )
 
         await ctx.send(embed=embed)

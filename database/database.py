@@ -17,86 +17,112 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import psycopg2
+import aiopg
+
+
+async def init_dbconn(database_url):
+    dbconn = DatabaseConn(database_url)
+    await dbconn._init()
+    return dbconn
 
 
 class DatabaseConn:
     def __init__(self, database_url):
-        self.conn = psycopg2.connect(database_url)
-        self.cur = self.conn.cursor()
+        self.database_url = database_url
+
+    async def _init(self):
+        self.pool = await aiopg.create_pool(self.database_url)
 
     async def add_term(self, term, description, source, synonyms, category):
-        if synonyms:
-            self.cur.execute(
-                "INSERT INTO terms (term, description, source, synonyms, categories) VALUES (%s, %s, %s, %s, %s)",
-                (term, description, source, synonyms, [category]),
-            )
-        else:
-            self.cur.execute(
-                "INSERT INTO terms (term, description, source, categories) VALUES (%s, %s, %s, %s)",
-                (term, description, source, [category]),
-            )
-        self.conn.commit()
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                if synonyms:
+                    await cur.execute(
+                        "INSERT INTO terms (term, description, source, synonyms, categories) VALUES (%s, %s, %s, %s, %s)",
+                        (term, description, source, synonyms, [category]),
+                    )
+                else:
+                    await cur.execute(
+                        "INSERT INTO terms (term, description, source, categories) VALUES (%s, %s, %s, %s)",
+                        (term, description, source, [category]),
+                    )
 
     async def set_categories(self, term, categories):
-        self.cur.execute(
-            "UPDATE terms SET categories = %s WHERE term = %s OR %s = ANY (synonyms)",
-            (categories, term, term),
-        )
-        self.conn.commit()
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "UPDATE terms SET categories = %s WHERE term = %s OR %s = ANY (synonyms)",
+                    (categories, term, term),
+                )
 
     async def del_term(self, term_id):
-        self.cur.execute("DELETE FROM terms WHERE id = %s", (int(term_id),))
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("DELETE FROM terms WHERE id = %s", (int(term_id),))
 
     async def get_term(self, term):
-        if isinstance(term, int):
-            self.cur.execute("SELECT * FROM terms WHERE id = %s", (int(term),))
-        elif isinstance(term, str):
-            self.cur.execute(
-                "SELECT * FROM terms WHERE term = %s OR %s = ANY (synonyms)",
-                (term, term),
-            )
-        return self.cur.fetchone()
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                if isinstance(term, int):
+                    await cur.execute("SELECT * FROM terms WHERE id = %s", (int(term),))
+                elif isinstance(term, str):
+                    await cur.execute(
+                        "SELECT * FROM terms WHERE term = %s OR %s = ANY (synonyms)",
+                        (term, term),
+                    )
+                    return await cur.fetchone()
 
     async def add_explanation(self, topic, explanation):
-        self.cur.execute(
-            "INSERT INTO explanations (topic, explanation) VALUES (%s, %s)",
-            (topic, explanation),
-        )
-        self.conn.commit()
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "INSERT INTO explanations (topic, explanation) VALUES (%s, %s)",
+                    (topic, explanation),
+                )
 
     async def get_explanation(self, topic):
-        self.cur.execute("SELECT * FROM explanations WHERE topic = %s", (topic,))
-        return self.cur.fetchone()
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "SELECT * FROM explanations WHERE topic = %s", (topic,)
+                )
+                return await cur.fetchone()
 
     async def get_topics(self):
-        self.cur.execute("SELECT * FROM explanations")
-        return self.cur.fetchall()
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("SELECT * FROM explanations")
+                return await cur.fetchall()
 
     async def add_to_blacklist(self, channel, guild_id):
-        self.cur.execute(
-            "INSERT INTO blacklisted_channels (channel_id, server_id) VALUES (%s, %s)",
-            (channel, guild_id),
-        )
-        self.conn.commit()
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "INSERT INTO blacklisted_channels (channel_id, server_id) VALUES (%s, %s)",
+                    (channel, guild_id),
+                )
 
     async def remove_from_blacklist(self, channel, guild_id):
-        self.cur.execute(
-            "DELETE FROM blacklisted_channels WHERE channel_id = %s AND server_id = %s",
-            (int(channel), int(guild_id)),
-        )
-        self.conn.commit()
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "DELETE FROM blacklisted_channels WHERE channel_id = %s AND server_id = %s",
+                    (int(channel), int(guild_id)),
+                )
 
     async def get_blacklist(self, guild_id):
-        self.cur.execute(
-            "SELECT channel_id FROM blacklisted_channels WHERE server_id = %s",
-            (int(guild_id),),
-        )
-        channels = self.cur.fetchall()
-        channel_list = []
-        for channel in channels:
-            channel_list.append(channel[0])
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "SELECT channel_id FROM blacklisted_channels WHERE server_id = %s",
+                    (int(guild_id),),
+                )
+                channels = await cur.fetchall()
+                channel_list = []
+                for channel in channels:
+                    channel_list.append(channel[0])
 
-        return channel_list
+                return channel_list
 
     async def channel_not_blacklisted(self, ctx):
         if ctx.message.guild:
@@ -107,7 +133,9 @@ class DatabaseConn:
             return True
 
     async def add_bot_admin(self, user_id, user):
-        self.cur.execute(
-            "INSERT INTO admins (user_id, added_by_id) VALUES (%s, %s)", (user_id, user)
-        )
-        self.conn.commit()
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "INSERT INTO admins (user_id, added_by_id) VALUES (%s, %s)",
+                    (user_id, user),
+                )
