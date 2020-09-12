@@ -86,15 +86,15 @@ class DatabaseConn:
                 )
 
     async def get_explanation(self, topic):
-        #data = asyncio.run(retrive_data_rolling((topic, 86400)))
-        #if data == False:
-        async with self.pool.acquire() as conn:
-            async with conn.cursor() as cur:
-                await cur.execute(
-                    "SELECT * FROM explanations WHERE topic = %s", (topic,)
-                )
-                return await cur.fetchone()
-        #return data
+        data = asyncio.run(retrive_data_rolling((topic, 86400)))
+        if data == False:
+            async with self.pool.acquire() as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute(
+                        "SELECT * FROM explanations WHERE topic = %s", (topic,)
+                    )
+                    return await cur.fetchone()
+        return data
 
     async def get_topics(self):
         data = asyncio.run(retrive_data_rolling(("topics", 86400)))
@@ -122,21 +122,21 @@ class DatabaseConn:
                 )
 
     async def get_blacklist(self, guild_id):
-        data = asyncio.run(retrive_data_rolling(("blacklisted_channels", 86400)))
-        if data == False:
-            async with self.pool.acquire() as conn:
-                async with conn.cursor() as cur:
-                    await cur.execute(
-                        "SELECT channel_id FROM blacklisted_channels WHERE server_id = %s",
-                        (int(guild_id),),
-                    )
-                    channels = await cur.fetchall()
-                    channel_list = []
-                    for channel in channels:
-                        channel_list.append(channel[0])
+        #data = asyncio.run(retrive_data_rolling(("blacklisted_channels", 86400)))
+        #if data == False:
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "SELECT channel_id FROM blacklisted_channels WHERE server_id = %s",
+                    (int(guild_id),),
+                )
+                channels = await cur.fetchall()
+                channel_list = []
+                for channel in channels:
+                    channel_list.append(channel[0])
 
-                    return channel_list
-        return data
+                return channel_list
+        #return data
 
     async def channel_not_blacklisted(self, ctx):
         if ctx.message.guild:
